@@ -1,0 +1,10 @@
+{
+    "name": "Websense",
+    "version": "0.1.0",
+    "description": "Websense description",
+    "permissions": [
+        "tabs",
+        "activeTab"
+    ],
+    "manifest_version": 3
+}
