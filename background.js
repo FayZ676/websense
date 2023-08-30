@@ -58,5 +58,13 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
     tabFocusTimes[tabId].startTime = timestamp;
   }
 
-  console.log(tabFocusTimes);
+  // console.log(tabFocusTimes);
+});
+
+// Listen for messages from the popup
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.action === "getTabFocusTimes") {
+    // Send the tabFocusTimes data to the popup
+    sendResponse({ tabFocusTimes });
+  }
 });
