@@ -4,7 +4,8 @@
     "description": "Websense description",
     "permissions": [
         "tabs",
-        "activeTab"
+        "activeTab",
+        "downloads"
     ],
     "action": {
         "default_popup": "popup.html"
