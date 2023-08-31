@@ -86,6 +86,32 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 // LISTEN FOR MESSAGE FROM POPUP
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getTabFocusTimes") {
+    // Update the tabFocusTimes for the currently active tab
+    // Retrieve the index currently active tab from the tabFocusTimes object
+    const activeTab = Object.keys(tabFocusTimes).find(
+      (tabId) => tabFocusTimes[tabId].isActive
+    );
+
+    // If there is an active tab
+    if (activeTab) {
+      // Update the endTime
+      tabFocusTimes[activeTab].endTime = new Date().getTime();
+
+      // Calculate the focusTimeSeconds
+      tabFocusTimes[activeTab].focusTimeSeconds += Math.round(
+        (tabFocusTimes[activeTab].endTime -
+          tabFocusTimes[activeTab].startTime) /
+          1000
+      );
+    }
+
+    // Persist the updated tabFocusTimes data to chrome.storage
+    chrome.storage.local
+      .set({ tabFocusTimes: tabFocusTimes })
+      .then((result) => {
+        console.log("tabFocusTimes updated in chrome.storage.local");
+      });
+
     // Send the tabFocusTimes data to the popup
     sendResponse({ tabFocusTimes });
   }
