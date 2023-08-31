@@ -1,6 +1,23 @@
-const tabFocusTimes = {};
+// Re-assignable Object to store tab focus times
+let tabFocusTimes = {};
 
-// Fires when the active tab in a window changes.
+// INITIALIZE TAB FOCUS TIMES
+chrome.storage.local.get(["tabFocusTimes"], (result) => {
+  // If the tabFocusTimes object exists in chrome.storage.local
+  if (result.tabFocusTimes) {
+    // Update the tabFocusTimes object with the value from chrome.storage.local
+    tabFocusTimes = result.tabFocusTimes;
+  }
+  // Otherwise if the tabFocusTimes object does not exist in chrome.storage.local
+  else {
+    // Initialize the tabFocusTimes object in chrome.storage.local
+    chrome.storage.local.set({ tabFocusTimes: tabFocusTimes }).then(() => {
+      console.log("tabFocusTimes initialized in chrome.storage.local");
+    });
+  }
+});
+
+// LISTEN FOR TAB CHANGES
 chrome.tabs.onActivated.addListener((activeInfo) => {
   // Current Tab ID
   const tabId = activeInfo.tabId;
@@ -59,9 +76,14 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   }
 
   console.log(tabFocusTimes);
+
+  // Persist the updated tabFocusTimes data to chrome.storage
+  chrome.storage.local.set({ tabFocusTimes: tabFocusTimes }).then((result) => {
+    console.log("tabFocusTimes updated in chrome.storage.local");
+  });
 });
 
-// Listen for messages from the popup
+// LISTEN FOR MESSAGE FROM POPUP
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   if (request.action === "getTabFocusTimes") {
     // Send the tabFocusTimes data to the popup
