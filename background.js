@@ -1,7 +1,7 @@
 // Re-assignable Object to store tab focus times
 let tabFocusTimes = {};
 
-// INITIALIZE TAB FOCUS TIMES
+// Initialize the tabFocusTimes object in chrome.storage.local
 chrome.storage.local.get(["tabFocusTimes"], (result) => {
   // If the tabFocusTimes object exists in chrome.storage.local
   if (result.tabFocusTimes) {
@@ -17,7 +17,7 @@ chrome.storage.local.get(["tabFocusTimes"], (result) => {
   }
 });
 
-// LISTEN FOR TAB CHANGES
+// Listen for tab changes
 chrome.tabs.onActivated.addListener((activeInfo) => {
   // Current Tab ID
   const tabId = activeInfo.tabId;
@@ -83,8 +83,9 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
   });
 });
 
-// LISTEN FOR MESSAGE FROM POPUP
+// Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  // Grab the current focus times from the tabFocusTimes object
   if (request.action === "getTabFocusTimes") {
     // Update the tabFocusTimes for the currently active tab
     // Retrieve the index currently active tab from the tabFocusTimes object
@@ -116,6 +117,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ tabFocusTimes });
   }
 
+  // Clear the chrome.storage.local and tabFocusTimes data
   if (request.action === "clearTabFocusTimes") {
     // Clear the chrome.storage.local data
     chrome.storage.local.clear();
@@ -129,3 +131,5 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     sendResponse({ tabFocusTimes });
   }
 });
+
+// Listen for tab updates

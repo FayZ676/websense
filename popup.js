@@ -1,6 +1,8 @@
+// UTILS
+
+// Export the tabFocusTimes data to a CSV file
 function exportToCSV(tabFocusTimes) {
   const csvContent = [];
-  // Header row
   csvContent.push("Title,URL,Focus Time (seconds)");
 
   // Add data for each tab into the csv
@@ -21,8 +23,9 @@ function exportToCSV(tabFocusTimes) {
   downloadLink.click();
 }
 
-// Send a message to the background script
-// to retrieve the tabFocusTimes data
+// CHROME EXTENSION CODE
+
+// Update the tab list when the popup is opened
 chrome.runtime.sendMessage({ action: "getTabFocusTimes" }, (response) => {
   if (chrome.runtime.lastError) {
     console.error(chrome.runtime.lastError);
@@ -52,19 +55,12 @@ chrome.runtime.sendMessage({ action: "getTabFocusTimes" }, (response) => {
   }
 });
 
+// Clear the tab list when the reset button is clicked
 const tabList = document.getElementById("tabList");
 const resetButton = document.getElementById("reset");
 resetButton.addEventListener("click", () => {
   chrome.runtime.sendMessage({ action: "clearTabFocusTimes" }, (result) => {
     tabFocusTimes = result.tabFocusTimes;
-
-    for (const tabId in tabFocusTimes) {
-      const tabData = tabFocusTimes[tabId];
-      const listItem = document.createElement("li");
-      listItem.textContent = `Title: ${tabData.title}, URL: ${tabData.url}, Focus Time: ${tabData.focusTimeSeconds} seconds`;
-      tabList.appendChild(listItem);
-    }
-
     tabList.innerHTML = "";
   });
 });
