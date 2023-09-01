@@ -115,4 +115,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Send the tabFocusTimes data to the popup
     sendResponse({ tabFocusTimes });
   }
+
+  if (request.action === "clearTabFocusTimes") {
+    // Clear the chrome.storage.local data
+    chrome.storage.local.clear();
+
+    console.log("tabFocusTimes cleared from chrome.storage.local");
+
+    // Update the tabFocusTimes object
+    tabFocusTimes = {};
+
+    // Send the tabFocusTimes data to the popup
+    sendResponse({ tabFocusTimes });
+  }
 });

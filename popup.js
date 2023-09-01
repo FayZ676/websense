@@ -51,3 +51,20 @@ chrome.runtime.sendMessage({ action: "getTabFocusTimes" }, (response) => {
     });
   }
 });
+
+const tabList = document.getElementById("tabList");
+const resetButton = document.getElementById("reset");
+resetButton.addEventListener("click", () => {
+  chrome.runtime.sendMessage({ action: "clearTabFocusTimes" }, (result) => {
+    tabFocusTimes = result.tabFocusTimes;
+
+    for (const tabId in tabFocusTimes) {
+      const tabData = tabFocusTimes[tabId];
+      const listItem = document.createElement("li");
+      listItem.textContent = `Title: ${tabData.title}, URL: ${tabData.url}, Focus Time: ${tabData.focusTimeSeconds} seconds`;
+      tabList.appendChild(listItem);
+    }
+
+    tabList.innerHTML = "";
+  });
+});
