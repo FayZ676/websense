@@ -5,14 +5,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Ubuntu+Mono&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="popup.css">
 </head>
 
-<body>
-    <h1>Websense</h1>
-    <h2>Focus Times</h2>
-    <ul id="tabList"></ul>
-    <button id="export">Export to CSV</button>
-    <button id="reset">Reset Times</button>
+<body class="body">
+    <header class="header">
+        <h1 class="title">Websense</h1>
+    </header>
+    <div class="main">
+        <ul id="tabList"></ul>
+    </div>
+    <footer class="footer btn-group">
+        <button class="btn btn-export" id="export">Export to CSV</button>
+        <button class="btn btn-reset" id="reset">Reset Times</button>
+    </footer>
     <script src="popup.js"></script>
 </body>
 
