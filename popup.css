@@ -139,9 +139,12 @@ body {
   background-color: #262422;
   width: 300px;
   height: 550px;
-  /* round bottom border by 25px */
-  border-bottom-left-radius: 25px;
-  border-bottom-right-radius: 25px;
+  display: flex;
+  flex-direction: column;
+}
+
+.main {
+  flex-grow: 1;
 }
 
 .header {
@@ -189,4 +192,10 @@ body {
 .btn-export {
   border: none;
   background-color: #5fd68f;
+}
+
+footer {
+  background-color: #333;
+  padding: 10px;
+  text-align: center;
 }
