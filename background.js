@@ -1,35 +1,54 @@
 // Re-assignable Object to store tab focus times
 let tabFocusTimes = {};
 
-// Initialize the tabFocusTimes object in chrome.storage.local
-chrome.storage.local.get(["tabFocusTimes"], (result) => {
-  if (result.tabFocusTimes) {
-    tabFocusTimes = result.tabFocusTimes;
-  } else {
-    chrome.storage.local.set({ tabFocusTimes: tabFocusTimes }).then(() => {
-      console.log("tabFocusTimes initialized in chrome.storage.local");
-    });
-  }
+const updateTabFocusTimesFromStorage = chrome.storage.local
+  .get(["tabFocusTimes"])
+  .then((result) => {
+    if (result.tabFocusTimes) {
+      Object.assign(tabFocusTimes, result.tabFocusTimes);
+      console.log("STORAGE FOCUS TIMES\n");
+      console.log(result.tabFocusTimes);
+    }
+  });
+
+const updateTabFocusTimesFromLocal = chrome.storage.local
+  .set({ tabFocusTimes: tabFocusTimes })
+  .then(() => {
+    console.log("LOCAL FOCUS TIMES\n");
+    console.log(tabFocusTimes);
+  });
+
+// Initialize the tabFocusTimes object in chrome.storage.local when the extension is installed
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.get(["tabFocusTimes"], (result) => {
+    if (result.tabFocusTimes) {
+      Object.assign(tabFocusTimes, result.tabFocusTimes);
+    } else {
+      chrome.storage.local.set({ tabFocusTimes: tabFocusTimes });
+    }
+  });
 });
 
 // Listen for tab changes
-chrome.tabs.onActivated.addListener((activeInfo) => {
+chrome.tabs.onActivated.addListener(async (activeInfo) => {
+  try {
+    await updateTabFocusTimesFromStorage;
+  } catch (e) {
+    console.error(e);
+  }
+
   const tabId = activeInfo.tabId;
-  const timestamp = new Date().getTime();
   const lastActiveTab = Object.keys(tabFocusTimes).find(
     (tabId) => tabFocusTimes[tabId].isActive
   );
-
   if (lastActiveTab) {
-    tabFocusTimes[lastActiveTab].endTime = timestamp;
-    tabFocusTimes[lastActiveTab].focusTimeSeconds += Math.round(
-      (tabFocusTimes[lastActiveTab].endTime -
-        tabFocusTimes[lastActiveTab].startTime) /
-        1000
-    );
+    const now = Date.now();
+    const lastActive = tabFocusTimes[lastActiveTab].lastActive;
+    const elapsedSeconds = (now - lastActive) / 1000;
+    tabFocusTimes[lastActiveTab].lastActive = now;
+    tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
     tabFocusTimes[lastActiveTab].isActive = false;
   }
-
   if (!tabFocusTimes[tabId]) {
     chrome.tabs.get(tabId, (tab) => {
       tabUrl = tab.url;
@@ -37,53 +56,56 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
       tabFocusTimes[tabId] = {
         title: tabTitle,
         url: tabUrl,
-        startTime: timestamp,
-        endTime: null,
-        focusTimeSeconds: 0,
+        lastActive: Date.now(),
+        totalFocusTime: 0,
         isActive: true,
       };
     });
   } else {
     tabFocusTimes[tabId].isActive = true;
-    tabFocusTimes[tabId].startTime = timestamp;
+    tabFocusTimes[tabId].lastActive = Date.now();
   }
 
-  console.log(tabFocusTimes);
-
-  chrome.storage.local.set({ tabFocusTimes: tabFocusTimes }).then((result) => {
-    console.log("tabFocusTimes updated in chrome.storage.local");
-  });
+  try {
+    await updateTabFocusTimesFromLocal;
+  } catch (e) {
+    console.error(e);
+  }
 });
 
 // Listen for messages from the popup
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
+  try {
+    await updateTabFocusTimesFromStorage;
+  } catch (e) {
+    console.error(e);
+  }
+
   if (request.action === "getTabFocusTimes") {
-    const activeTab = Object.keys(tabFocusTimes).find(
+    const lastActiveTab = Object.keys(tabFocusTimes).find(
       (tabId) => tabFocusTimes[tabId].isActive
     );
-
-    if (activeTab) {
-      tabFocusTimes[activeTab].endTime = new Date().getTime();
-      tabFocusTimes[activeTab].focusTimeSeconds += Math.round(
-        (tabFocusTimes[activeTab].endTime -
-          tabFocusTimes[activeTab].startTime) /
-          1000
-      );
+    if (lastActiveTab) {
+      const now = Date.now();
+      const lastActive = tabFocusTimes[lastActiveTab].lastActive;
+      const elapsedSeconds = (now - lastActive) / 1000;
+      tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
+      tabFocusTimes[lastActiveTab].lastActive = now;
     }
-
-    chrome.storage.local
-      .set({ tabFocusTimes: tabFocusTimes })
-      .then((result) => {
-        console.log("tabFocusTimes updated in chrome.storage.local");
-      });
-
-    sendResponse({ tabFocusTimes });
   }
 
-  if (request.action === "clearTabFocusTimes") {
+  if (message === "clearTabFocusTimes") {
     chrome.storage.local.clear();
     tabFocusTimes = {};
-
-    sendResponse({ tabFocusTimes });
   }
+
+  try {
+    await updateTabFocusTimesFromLocal;
+  } catch (e) {
+    console.error(e);
+  }
+
+  sendResponse({ tabFocusTimes });
+
+  return true;
 });

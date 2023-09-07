@@ -9,7 +9,7 @@ function exportToCSV(tabFocusTimes) {
   for (const tabId in tabFocusTimes) {
     const tabData = tabFocusTimes[tabId];
     csvContent.push(
-      `"${tabData.title}", "${tabData.url}", ${tabData.focusTimeSeconds}`
+      `"${tabData.title}", "${tabData.url}", ${tabData.totalFocusTime}}`
     );
   }
 
@@ -24,8 +24,14 @@ function exportToCSV(tabFocusTimes) {
 // CHROME EXTENSION CODE
 
 // Update the tab list when the popup is opened
-chrome.runtime.sendMessage({ action: "getTabFocusTimes" }, (response) => {
+async () => {
+  const response = await chrome.runtime.sendMessage({
+    action: "getTabFocusTimes",
+  });
+  console.log("RESPONSE RETRIEVED:\n");
+  console.log(response);
   if (chrome.runtime.lastError) {
+    console.log("ERROR:\n");
     console.error(chrome.runtime.lastError);
   } else {
     const tabFocusTimes = response.tabFocusTimes;
@@ -46,7 +52,7 @@ chrome.runtime.sendMessage({ action: "getTabFocusTimes" }, (response) => {
       tabFocusTime.classList.add("tab-focus-time");
 
       tabTitle.innerHTML = `<a href="${tabData.url}" target="_blank">${tabData.title}</a>`;
-      tabFocusTime.textContent = `${tabData.focusTimeSeconds} seconds`;
+      tabFocusTime.textContent = `${tabData.totalFocusTime} seconds`;
 
       listItemContent.appendChild(tabTitle);
       listItemContent.appendChild(tabFocusTime);
@@ -59,13 +65,52 @@ chrome.runtime.sendMessage({ action: "getTabFocusTimes" }, (response) => {
       exportToCSV(tabFocusTimes);
     });
   }
-});
+};
+// chrome.runtime.sendMessage("getTabFocusTimes", (response) => {
+//   console.log("RESPONSE RETRIEVED:\n");
+//   console.log(response);
+//   if (chrome.runtime.lastError) {
+//     console.log("ERROR:\n");
+//     console.error(chrome.runtime.lastError);
+//   } else {
+//     const tabFocusTimes = response.tabFocusTimes;
+
+//     const tabList = document.getElementById("tabList");
+//     tabList.innerHTML = "";
+
+//     for (const tabId in tabFocusTimes) {
+//       const tabData = tabFocusTimes[tabId];
+//       const listItem = document.createElement("li");
+//       const listItemContent = document.createElement("div");
+//       const tabTitle = document.createElement("h3");
+//       const tabFocusTime = document.createElement("p");
+
+//       listItem.classList.add("list-item");
+//       listItemContent.classList.add("item-card");
+//       tabTitle.classList.add("tab-title");
+//       tabFocusTime.classList.add("tab-focus-time");
+
+//       tabTitle.innerHTML = `<a href="${tabData.url}" target="_blank">${tabData.title}</a>`;
+//       tabFocusTime.textContent = `${tabData.totalFocusTime} seconds`;
+
+//       listItemContent.appendChild(tabTitle);
+//       listItemContent.appendChild(tabFocusTime);
+//       listItem.appendChild(listItemContent);
+//       tabList.appendChild(listItem);
+//     }
+
+//     const exportButton = document.getElementById("export");
+//     exportButton.addEventListener("click", () => {
+//       exportToCSV(tabFocusTimes);
+//     });
+//   }
+// });
 
 // Clear the tab list when the reset button is clicked
 const tabList = document.getElementById("tabList");
 const resetButton = document.getElementById("reset");
 resetButton.addEventListener("click", () => {
-  chrome.runtime.sendMessage({ action: "clearTabFocusTimes" }, (result) => {
+  chrome.runtime.sendMessage("clearTabFocusTimes", (result) => {
     tabFocusTimes = result.tabFocusTimes;
     tabList.innerHTML = "";
   });
