@@ -31,11 +31,7 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for tab changes
 chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  try {
-    await updateTabFocusTimesFromStorage;
-  } catch (e) {
-    console.error(e);
-  }
+  await updateTabFocusTimesFromStorage;
 
   const tabId = activeInfo.tabId;
   const lastActiveTab = Object.keys(tabFocusTimes).find(
@@ -66,20 +62,15 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     tabFocusTimes[tabId].lastActive = Date.now();
   }
 
-  try {
-    await updateTabFocusTimesFromLocal;
-  } catch (e) {
-    console.error(e);
-  }
+  await updateTabFocusTimesFromLocal;
 });
 
 // Listen for messages from the popup
-chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
-  try {
-    await updateTabFocusTimesFromStorage;
-  } catch (e) {
-    console.error(e);
-  }
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  console.log("MESSAGE RECEIVED:\n");
+  console.log(request);
+
+  // await updateTabFocusTimesFromStorage;
 
   if (request.action === "getTabFocusTimes") {
     const lastActiveTab = Object.keys(tabFocusTimes).find(
@@ -94,18 +85,15 @@ chrome.runtime.onMessage.addListener(async (request, sender, sendResponse) => {
     }
   }
 
-  if (message === "clearTabFocusTimes") {
+  if (request.action === "clearTabFocusTimes") {
     chrome.storage.local.clear();
     tabFocusTimes = {};
   }
 
-  try {
-    await updateTabFocusTimesFromLocal;
-  } catch (e) {
-    console.error(e);
-  }
-
-  sendResponse({ tabFocusTimes });
+  // await updateTabFocusTimesFromLocal;
+  console.log("SENDING RESPONSE:\n");
+  console.log(tabFocusTimes);
+  sendResponse({ tabFocusTimes: tabFocusTimes });
 
   return true;
 });

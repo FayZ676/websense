@@ -24,49 +24,21 @@ function exportToCSV(tabFocusTimes) {
 // CHROME EXTENSION CODE
 
 // Update the tab list when the popup is opened
-async () => {
-  const response = await chrome.runtime.sendMessage({
-    action: "getTabFocusTimes",
-  });
-  console.log("RESPONSE RETRIEVED:\n");
-  console.log(response);
-  if (chrome.runtime.lastError) {
-    console.log("ERROR:\n");
-    console.error(chrome.runtime.lastError);
+const action = { action: "getTabFocusTimes" };
+chrome.runtime.sendMessage(action).then((response) => {
+  if (response) {
+    console.log("RESPONSE RETRIEVED:\n");
+    console.log(response);
   } else {
-    const tabFocusTimes = response.tabFocusTimes;
-
-    const tabList = document.getElementById("tabList");
-    tabList.innerHTML = "";
-
-    for (const tabId in tabFocusTimes) {
-      const tabData = tabFocusTimes[tabId];
-      const listItem = document.createElement("li");
-      const listItemContent = document.createElement("div");
-      const tabTitle = document.createElement("h3");
-      const tabFocusTime = document.createElement("p");
-
-      listItem.classList.add("list-item");
-      listItemContent.classList.add("item-card");
-      tabTitle.classList.add("tab-title");
-      tabFocusTime.classList.add("tab-focus-time");
-
-      tabTitle.innerHTML = `<a href="${tabData.url}" target="_blank">${tabData.title}</a>`;
-      tabFocusTime.textContent = `${tabData.totalFocusTime} seconds`;
-
-      listItemContent.appendChild(tabTitle);
-      listItemContent.appendChild(tabFocusTime);
-      listItem.appendChild(listItemContent);
-      tabList.appendChild(listItem);
-    }
-
-    const exportButton = document.getElementById("export");
-    exportButton.addEventListener("click", () => {
-      exportToCSV(tabFocusTimes);
-    });
+    console.log("ERROR RETRIEVING RESPONSE:\n");
+    console.error(response);
   }
-};
-// chrome.runtime.sendMessage("getTabFocusTimes", (response) => {
+});
+
+// async () => {
+//   const response = await chrome.runtime.sendMessage({
+//     action: "getTabFocusTimes",
+//   });
 //   console.log("RESPONSE RETRIEVED:\n");
 //   console.log(response);
 //   if (chrome.runtime.lastError) {
@@ -104,7 +76,7 @@ async () => {
 //       exportToCSV(tabFocusTimes);
 //     });
 //   }
-// });
+// };
 
 // Clear the tab list when the reset button is clicked
 const tabList = document.getElementById("tabList");
