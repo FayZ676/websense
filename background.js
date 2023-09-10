@@ -30,9 +30,7 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // Listen for tab changes
-chrome.tabs.onActivated.addListener(async (activeInfo) => {
-  await updateTabFocusTimesFromStorage;
-
+chrome.tabs.onActivated.addListener((activeInfo) => {
   const tabId = activeInfo.tabId;
   const lastActiveTab = Object.keys(tabFocusTimes).find(
     (tabId) => tabFocusTimes[tabId].isActive
@@ -61,16 +59,12 @@ chrome.tabs.onActivated.addListener(async (activeInfo) => {
     tabFocusTimes[tabId].isActive = true;
     tabFocusTimes[tabId].lastActive = Date.now();
   }
-
-  await updateTabFocusTimesFromLocal;
 });
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   console.log("MESSAGE RECEIVED:\n");
   console.log(request);
-
-  // await updateTabFocusTimesFromStorage;
 
   if (request.action === "getTabFocusTimes") {
     const lastActiveTab = Object.keys(tabFocusTimes).find(
@@ -90,7 +84,6 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     tabFocusTimes = {};
   }
 
-  // await updateTabFocusTimesFromLocal;
   console.log("SENDING RESPONSE:\n");
   console.log(tabFocusTimes);
   sendResponse({ tabFocusTimes: tabFocusTimes });
