@@ -1,23 +1,6 @@
 // Re-assignable Object to store tab focus times
 let tabFocusTimes = {};
 
-const updateTabFocusTimesFromStorage = chrome.storage.local
-  .get(["tabFocusTimes"])
-  .then((result) => {
-    if (result.tabFocusTimes) {
-      Object.assign(tabFocusTimes, result.tabFocusTimes);
-      console.log("STORAGE FOCUS TIMES\n");
-      console.log(result.tabFocusTimes);
-    }
-  });
-
-const updateTabFocusTimesFromLocal = chrome.storage.local
-  .set({ tabFocusTimes: tabFocusTimes })
-  .then(() => {
-    console.log("LOCAL FOCUS TIMES\n");
-    console.log(tabFocusTimes);
-  });
-
 // Initialize the tabFocusTimes object in chrome.storage.local when the extension is installed
 chrome.runtime.onInstalled.addListener(() => {
   chrome.storage.local.get(["tabFocusTimes"], (result) => {
@@ -63,30 +46,58 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  console.log("MESSAGE RECEIVED:\n");
-  console.log(request);
+  chrome.storage.local.get(["tabFocusTimes"]).then((response) => {
+    tabFocusTimes = response.tabFocusTimes;
+    if (request.action === "getTabFocusTimes") {
+      const lastActiveTab = Object.keys(tabFocusTimes).find(
+        (tabId) => tabFocusTimes[tabId].isActive
+      );
+      if (lastActiveTab) {
+        const now = Date.now();
+        const lastActive = tabFocusTimes[lastActiveTab].lastActive;
+        const elapsedSeconds = (now - lastActive) / 1000;
+        tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
+        tabFocusTimes[lastActiveTab].lastActive = now;
+      }
 
-  if (request.action === "getTabFocusTimes") {
-    const lastActiveTab = Object.keys(tabFocusTimes).find(
-      (tabId) => tabFocusTimes[tabId].isActive
-    );
-    if (lastActiveTab) {
-      const now = Date.now();
-      const lastActive = tabFocusTimes[lastActiveTab].lastActive;
-      const elapsedSeconds = (now - lastActive) / 1000;
-      tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
-      tabFocusTimes[lastActiveTab].lastActive = now;
+      chrome.storage.local.set({ tabFocusTimes: tabFocusTimes }).then(() => {
+        sendResponse({ tabFocusTimes: tabFocusTimes });
+      });
     }
-  }
 
-  if (request.action === "clearTabFocusTimes") {
-    chrome.storage.local.clear();
-    tabFocusTimes = {};
-  }
+    if (request.action === "clearTabFocusTimes") {
+      chrome.storage.local.clear().then(() => {
+        tabFocusTimes = {};
+        sendResponse({ tabFocusTimes: tabFocusTimes });
+      });
+    }
 
-  console.log("SENDING RESPONSE:\n");
-  console.log(tabFocusTimes);
-  sendResponse({ tabFocusTimes: tabFocusTimes });
+    // sendResponse({ tabFocusTimes: tabFocusTimes });
+  });
+  // console.log("MESSAGE RECEIVED:\n");
+  // console.log(request);
+
+  // if (request.action === "getTabFocusTimes") {
+  //   const lastActiveTab = Object.keys(tabFocusTimes).find(
+  //     (tabId) => tabFocusTimes[tabId].isActive
+  //   );
+  //   if (lastActiveTab) {
+  //     const now = Date.now();
+  //     const lastActive = tabFocusTimes[lastActiveTab].lastActive;
+  //     const elapsedSeconds = (now - lastActive) / 1000;
+  //     tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
+  //     tabFocusTimes[lastActiveTab].lastActive = now;
+  //   }
+  // }
+
+  // if (request.action === "clearTabFocusTimes") {
+  //   chrome.storage.local.clear();
+  //   tabFocusTimes = {};
+  // }
+
+  // console.log("SENDING RESPONSE:\n");
+  // console.log(tabFocusTimes);
+  // sendResponse({ tabFocusTimes: tabFocusTimes });
 
   return true;
 });
