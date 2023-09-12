@@ -14,40 +14,48 @@ chrome.runtime.onInstalled.addListener(() => {
 
 // Listen for tab changes
 chrome.tabs.onActivated.addListener((activeInfo) => {
-  const tabId = activeInfo.tabId;
-  const lastActiveTab = Object.keys(tabFocusTimes).find(
-    (tabId) => tabFocusTimes[tabId].isActive
-  );
-  if (lastActiveTab) {
-    const now = Date.now();
-    const lastActive = tabFocusTimes[lastActiveTab].lastActive;
-    const elapsedSeconds = (now - lastActive) / 1000;
-    tabFocusTimes[lastActiveTab].lastActive = now;
-    tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
-    tabFocusTimes[lastActiveTab].isActive = false;
-  }
-  if (!tabFocusTimes[tabId]) {
-    chrome.tabs.get(tabId, (tab) => {
-      tabUrl = tab.url;
-      tabTitle = tab.title;
-      tabFocusTimes[tabId] = {
-        title: tabTitle,
-        url: tabUrl,
-        lastActive: Date.now(),
-        totalFocusTime: 0,
-        isActive: true,
-      };
-    });
-  } else {
-    tabFocusTimes[tabId].isActive = true;
-    tabFocusTimes[tabId].lastActive = Date.now();
-  }
+  chrome.storage.local.get(["tabFocusTimes"]).then((response) => {
+    tabFocusTimes = response.tabFocusTimes;
+    const tabId = activeInfo.tabId;
+    const lastActiveTab = Object.keys(tabFocusTimes).find(
+      (tabId) => tabFocusTimes[tabId].isActive
+    );
+
+    if (lastActiveTab) {
+      const now = Date.now();
+      const lastActive = tabFocusTimes[lastActiveTab].lastActive;
+      const elapsedSeconds = (now - lastActive) / 1000;
+      tabFocusTimes[lastActiveTab].lastActive = now;
+      tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
+      tabFocusTimes[lastActiveTab].isActive = false;
+    }
+
+    if (!tabFocusTimes[tabId]) {
+      chrome.tabs.get(tabId, (tab) => {
+        tabUrl = tab.url;
+        tabTitle = tab.title;
+        tabFocusTimes[tabId] = {
+          title: tabTitle,
+          url: tabUrl,
+          lastActive: Date.now(),
+          totalFocusTime: 0,
+          isActive: true,
+        };
+      });
+    } else {
+      tabFocusTimes[tabId].isActive = true;
+      tabFocusTimes[tabId].lastActive = Date.now();
+    }
+
+    chrome.storage.local.set({ tabFocusTimes: tabFocusTimes }).then();
+  });
 });
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
   chrome.storage.local.get(["tabFocusTimes"]).then((response) => {
     tabFocusTimes = response.tabFocusTimes;
+
     if (request.action === "getTabFocusTimes") {
       const lastActiveTab = Object.keys(tabFocusTimes).find(
         (tabId) => tabFocusTimes[tabId].isActive
@@ -71,33 +79,7 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         sendResponse({ tabFocusTimes: tabFocusTimes });
       });
     }
-
-    // sendResponse({ tabFocusTimes: tabFocusTimes });
   });
-  // console.log("MESSAGE RECEIVED:\n");
-  // console.log(request);
-
-  // if (request.action === "getTabFocusTimes") {
-  //   const lastActiveTab = Object.keys(tabFocusTimes).find(
-  //     (tabId) => tabFocusTimes[tabId].isActive
-  //   );
-  //   if (lastActiveTab) {
-  //     const now = Date.now();
-  //     const lastActive = tabFocusTimes[lastActiveTab].lastActive;
-  //     const elapsedSeconds = (now - lastActive) / 1000;
-  //     tabFocusTimes[lastActiveTab].totalFocusTime += elapsedSeconds;
-  //     tabFocusTimes[lastActiveTab].lastActive = now;
-  //   }
-  // }
-
-  // if (request.action === "clearTabFocusTimes") {
-  //   chrome.storage.local.clear();
-  //   tabFocusTimes = {};
-  // }
-
-  // console.log("SENDING RESPONSE:\n");
-  // console.log(tabFocusTimes);
-  // sendResponse({ tabFocusTimes: tabFocusTimes });
 
   return true;
 });
