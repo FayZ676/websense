@@ -12,7 +12,7 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// Listen for tab changes
+// Listen for when the user swithces tabs
 chrome.tabs.onActivated.addListener((activeInfo) => {
   chrome.storage.local
     .get(["tabFocusTimes"])
@@ -63,6 +63,16 @@ chrome.tabs.onActivated.addListener((activeInfo) => {
         });
     });
 });
+
+// Listen for when the user changes the tab content
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  console.log("TAB UPDATED\n");
+  console.log(tabId);
+  console.log(changeInfo);
+});
+
+// Listen for when the user creates a new tab
+chrome.tabs.onCreated.addListener(() => {});
 
 // Listen for messages from the popup
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {

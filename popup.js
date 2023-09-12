@@ -3,18 +3,14 @@
 // Export the tabFocusTimes data to a CSV file
 function exportToCSV(tabFocusTimes) {
   const csvContent = [];
-
   csvContent.push("Title,URL,Focus Time (seconds)");
-
   for (const tabId in tabFocusTimes) {
     const tabData = tabFocusTimes[tabId];
     csvContent.push(
       `"${tabData.title}", "${tabData.url}", ${tabData.totalFocusTime}}`
     );
   }
-
   const blob = new Blob([csvContent.join("\n")], { type: "text/csv" });
-
   const downloadLink = document.createElement("a");
   downloadLink.href = window.URL.createObjectURL(blob);
   downloadLink.download = "tabFocusTimes.csv";
@@ -69,7 +65,8 @@ chrome.runtime.sendMessage(action).then((response) => {
 const tabList = document.getElementById("tabList");
 const resetButton = document.getElementById("reset");
 resetButton.addEventListener("click", () => {
-  chrome.runtime.sendMessage("clearTabFocusTimes", (result) => {
+  const action = { action: "clearTabFocusTimes" };
+  chrome.runtime.sendMessage(action).then((result) => {
     tabFocusTimes = result.tabFocusTimes;
     tabList.innerHTML = "";
   });
